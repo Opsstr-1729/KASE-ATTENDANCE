@@ -1,391 +1,1010 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Attendance Insight Portal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KASE — Attendance Portal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 
-        :root {
-            --brand:        #0e5774;
-            --brand-deep:   #0a3f54;
-            --brand-mid:    #1470923a;
-            --brand-light:  #e6f2f7;
-            --brand-pale:   #f0f8fb;
-            --accent:       #12a8d4;
-            --accent-light: #d0eef8;
-            --warm:         #f4a623;
-            --warm-light:   #fef3dd;
-            --danger:       #e0503c;
-            --danger-light: #fcecea;
-            --success:      #1a9e6e;
-            --success-light:#e4f7f0;
-            --text-primary: #0f2832;
-            --text-secondary:#4a6875;
-            --text-muted:   #8aaab5;
-            --surface:      #ffffff;
-            --surface-2:    #f5f9fb;
-            --surface-3:    #edf4f7;
-            --border:       #d0e5ed;
-            --border-strong:#a8c8d8;
-            --radius-sm: 6px;
-            --radius-md: 10px;
-            --radius-lg: 16px;
-            --radius-xl: 22px;
-            --shadow-sm: 0 1px 3px rgba(14,87,116,.08), 0 1px 2px rgba(14,87,116,.06);
-            --shadow-md: 0 4px 16px rgba(14,87,116,.10), 0 2px 6px rgba(14,87,116,.07);
-            --shadow-lg: 0 8px 32px rgba(14,87,116,.13), 0 4px 12px rgba(14,87,116,.08);
-        }
+:root {
+  --ink:        #0a1f28;
+  --brand:      #0e5774;
+  --brand-mid:  #1272a0;
+  --brand-glow: #1a8fc7;
+  --brand-pale: #e8f4fa;
+  --brand-faint:#f2f9fc;
+  --accent:     #f0a500;
+  --accent-bg:  #fff8e6;
+  --danger:     #d94f3c;
+  --danger-bg:  #fdf0ee;
+  --success:    #0f8a5f;
+  --success-bg: #e8f7f2;
+  --muted:      #5a7d8c;
+  --border:     #c8dfe9;
+  --border-light: #e2eff5;
+  --surface:    #ffffff;
+  --surface-2:  #f5f9fc;
+  --surface-3:  #edf4f8;
+  --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 24px; --r-pill: 999px;
+}
 
-        body {
-            font-family: 'DM Sans', sans-serif;
-            background: var(--surface-2);
-            color: var(--text-primary);
-            min-height: 100vh;
-            line-height: 1.5;
-        }
+body {
+  font-family: 'Instrument Sans', sans-serif;
+  background: var(--surface-2);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.5;
+}
 
-        body::before {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image:
-                radial-gradient(circle at 20% 20%, rgba(14,87,116,.055) 0%, transparent 55%),
-                radial-gradient(circle at 80% 80%, rgba(18,168,212,.04) 0%, transparent 55%);
-            pointer-events: none;
-            z-index: 0;
-        }
+/* ── TEXTURE GRID BACKGROUND ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(14,87,116,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(14,87,116,.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+  z-index: 0;
+}
 
-        /* ─── LOGIN ─── */
-        #loginPage {
-            display: flex; align-items: center; justify-content: center;
-            min-height: 100vh; padding: 1.5rem; position: relative; z-index: 1;
-        }
+/* ══════════════ LOGIN ══════════════ */
+#loginPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
 
-        .login-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-xl);
-            box-shadow: var(--shadow-lg);
-            width: 100%; max-width: 420px;
-            padding: 2.75rem 2.5rem;
-            animation: slideUp .45s cubic-bezier(.22,.68,0,1.2) both;
-        }
+.login-wrap {
+  width: 100%;
+  max-width: 420px;
+  padding: 1rem;
+}
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(22px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+.login-brand {
+  text-align: center;
+  margin-bottom: 2rem;
+}
 
-        .login-icon {
-            width: 56px; height: 56px; border-radius: var(--radius-md);
-            background: var(--brand); display: flex; align-items: center; justify-content: center;
-            margin-bottom: 1.5rem;
-        }
-        .login-icon svg { width: 26px; height: 26px; color: #fff; }
+.login-brand .wordmark {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--brand);
+  letter-spacing: -.02em;
+}
 
-        .login-title { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); letter-spacing: -.02em; line-height: 1.2; }
-        .login-sub { font-size: .875rem; color: var(--text-secondary); margin-top: .35rem; margin-bottom: 2rem; }
+.login-brand .sub {
+  font-size: .8rem;
+  color: var(--muted);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin-top: .2rem;
+}
 
-        .form-label { display: block; font-size: .72rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .45rem; }
-        .form-input {
-            width: 100%; padding: .8rem 1rem; font-family: 'DM Mono', monospace; font-size: .95rem;
-            background: var(--surface-2); border: 1.5px solid var(--border); border-radius: var(--radius-md);
-            color: var(--text-primary); outline: none; transition: all .18s;
-        }
-        .form-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(14,87,116,.12); background: var(--surface); }
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  padding: 2.5rem;
+  box-shadow: 0 0 0 6px rgba(14,87,116,.04), 0 16px 48px rgba(14,87,116,.10);
+}
 
-        .btn-primary {
-            width: 100%; padding: .85rem 1rem; margin-top: 1.25rem;
-            background: var(--brand); color: #fff; font-weight: 600; border: none;
-            border-radius: var(--radius-md); cursor: pointer; transition: all .18s;
-            box-shadow: 0 3px 14px rgba(14,87,116,.28);
-        }
-        .btn-primary:hover { background: var(--brand-deep); box-shadow: 0 4px 20px rgba(14,87,116,.38); }
+.login-card h2 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.4rem;
+  color: var(--ink);
+  margin-bottom: .4rem;
+}
 
-        .login-error {
-            display: none; margin-top: .9rem; padding: .65rem .9rem; background: var(--danger-light);
-            border: 1px solid rgba(224,80,60,.2); border-radius: var(--radius-sm); color: var(--danger);
-            font-size: .82rem; font-weight: 600; text-align: center;
-        }
+.login-card p {
+  font-size: .85rem;
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
 
-        /* ─── PORTAL ─── */
-        #portalPage { display: none; min-height: 100vh; position: relative; z-index: 1; }
+.field-group {
+  margin-bottom: 1.25rem;
+}
 
-        .topnav {
-            background: var(--brand); position: sticky; top: 0; z-index: 100;
-            padding: 0 2rem; display: flex; align-items: center; justify-content: space-between;
-            height: 60px; box-shadow: 0 2px 16px rgba(14,87,116,.25);
-        }
+.field-label {
+  display: block;
+  font-size: .75rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .45rem;
+}
 
-        .nav-brand { display: flex; align-items: center; gap: .75rem; }
-        .nav-brand-icon { width: 32px; height: 32px; background: rgba(255,255,255,.18); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
-        .nav-brand-icon svg { width: 16px; height: 16px; color: #fff; }
-        .nav-brand-name { font-size: 1rem; font-weight: 700; color: #fff; letter-spacing: -.01em; }
-        .nav-brand-name span { font-weight: 300; opacity: .7; }
+.form-input {
+  width: 100%;
+  padding: .8rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  font-family: 'DM Mono', monospace;
+  font-size: .9rem;
+  color: var(--ink);
+  background: var(--surface);
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
 
-        .btn-logout {
-            display: flex; align-items: center; gap: .4rem; background: rgba(255,255,255,.12);
-            border: 1px solid rgba(255,255,255,.2); color: rgba(255,255,255,.85);
-            font-size: .8rem; font-weight: 500; padding: .4rem .85rem; border-radius: var(--radius-sm);
-            cursor: pointer; transition: background .18s;
-        }
-        .btn-logout:hover { background: rgba(255,255,255,.22); color: #fff; }
+.form-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(14,87,116,.12);
+}
 
-        .main-content { max-width: 1200px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; }
+.btn-login {
+  width: 100%;
+  padding: .9rem;
+  background: var(--brand);
+  color: #fff;
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 600;
+  font-size: .95rem;
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background .2s, transform .15s;
+  letter-spacing: .01em;
+}
 
-        .hero-strip {
-            background: var(--brand); border-radius: var(--radius-xl); padding: 2.5rem 2.5rem;
-            margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;
-            gap: 2rem; flex-wrap: wrap; box-shadow: var(--shadow-md); position: relative; overflow: hidden;
-        }
+.btn-login:hover { background: var(--brand-mid); }
+.btn-login:active { transform: scale(.98); }
 
-        .hero-text h2 { font-size: 1.55rem; font-weight: 700; color: #fff; letter-spacing: -.02em; margin-bottom: .3rem; }
-        .hero-text p { font-size: .875rem; color: rgba(255,255,255,.62); font-weight: 300; }
+/* ══════════════ PORTAL ══════════════ */
+#portalPage { display: none; position: relative; z-index: 1; }
 
-        .btn-upload {
-            display: inline-flex; align-items: center; gap: .55rem; background: #fff;
-            color: var(--brand); font-size: .875rem; font-weight: 700; padding: .75rem 1.4rem;
-            border-radius: var(--radius-md); cursor: pointer; transition: all .15s;
-            box-shadow: 0 2px 12px rgba(0,0,0,.15); white-space: nowrap;
-        }
-        .btn-upload:hover { transform: translateY(-1px); box-shadow: 0 4px 18px rgba(0,0,0,.2); }
+/* NAV */
+.topnav {
+  background: var(--brand);
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
 
-        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: .75rem; }
-        .section-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
-        .section-count { font-size: .78rem; color: var(--text-muted); background: var(--surface-3); border: 1px solid var(--border); border-radius: 100px; padding: .2rem .7rem; }
+.nav-logo {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -.01em;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+}
 
-        .btn-download {
-            display: none; align-items: center; gap: .5rem; background: var(--success);
-            color: #fff; font-size: .82rem; font-weight: 600; padding: .55rem 1.1rem;
-            border-radius: var(--radius-md); border: none; cursor: pointer;
-            transition: all .18s; box-shadow: 0 2px 10px rgba(26,158,110,.22);
-        }
+.nav-logo .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  display: inline-block;
+}
 
-        #resultsGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 1.25rem; }
+.nav-logo .light { font-weight: 400; opacity: .7; }
 
-        /* ─── CARD DESIGN ─── */
-        .emp-card {
-            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm); overflow: hidden; display: flex; flex-direction: column;
-            transition: all .2s; animation: fadeCard .35s ease both;
-        }
-        @keyframes fadeCard { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .emp-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
-        .card-header { background: var(--brand-pale); border-bottom: 1px solid var(--border); padding: 1.1rem 1.3rem; display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
-        .emp-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--brand); color: #fff; font-size: .8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-        .emp-name { font-size: .95rem; font-weight: 600; color: var(--text-primary); flex: 1; }
-        .emp-mins-badge { background: var(--brand); color: #fff; border-radius: var(--radius-sm); padding: .35rem .7rem; text-align: center; }
-        .emp-mins-badge .num { display: block; font-size: 1.1rem; font-weight: 700; line-height: 1; font-family: 'DM Mono', monospace; }
-        .emp-mins-badge .lbl { display: block; font-size: .55rem; font-weight: 600; text-transform: uppercase; opacity: .75; }
+.nav-badge {
+  background: rgba(255,255,255,.12);
+  color: rgba(255,255,255,.85);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: .3rem .75rem;
+  border-radius: var(--r-pill);
+  border: 1px solid rgba(255,255,255,.15);
+}
 
-        .card-body { padding: 1rem 1.3rem; flex: 1; }
-        .log-row { display: flex; align-items: center; justify-content: space-between; padding: .55rem 0; border-bottom: 1px solid var(--surface-3); }
-        .log-date { font-size: .82rem; font-weight: 600; color: var(--text-primary); }
-        .tag-halfday { font-size: .65rem; font-weight: 700; text-transform: uppercase; background: var(--warm-light); color: var(--warm); padding: .15rem .5rem; border-radius: 100px; border: 1px solid rgba(244,166,35,.25); }
-        .log-time { font-size: .82rem; font-weight: 700; color: var(--danger); font-family: 'DM Mono', monospace; }
-        .log-late { font-size: .72rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }
+.btn-logout {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.18);
+  color: rgba(255,255,255,.9);
+  cursor: pointer;
+  font-size: .8rem;
+  font-family: 'Instrument Sans', sans-serif;
+  font-weight: 500;
+  padding: .35rem .9rem;
+  border-radius: var(--r-pill);
+  transition: background .2s;
+}
 
-        .card-footer { background: var(--surface-2); border-top: 1px solid var(--border); padding: .7rem 1.3rem; display: flex; align-items: center; justify-content: space-between; }
-        .footer-hd { display: flex; align-items: center; gap: .5rem; }
-        .hd-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--warm); }
-        .footer-hd-count { font-size: .82rem; font-weight: 700; color: var(--warm); }
+.btn-logout:hover { background: rgba(255,255,255,.2); }
 
-        .perfect-label { font-size: .8rem; font-weight: 600; color: var(--success); display: flex; align-items: center; gap: .4rem; }
-        .empty-state { grid-column: 1 / -1; padding: 4rem 2rem; text-align: center; }
-        .empty-icon svg { width: 28px; height: 28px; color: var(--text-muted); }
-    </style>
+/* MAIN */
+.main-content {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
+}
+
+/* HERO */
+.hero-strip {
+  background: var(--brand);
+  border-radius: var(--r-xl);
+  padding: 2.2rem 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-strip::before {
+  content: '';
+  position: absolute;
+  right: -60px;
+  top: -60px;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+}
+
+.hero-strip::after {
+  content: '';
+  position: absolute;
+  right: 80px;
+  bottom: -80px;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.04);
+}
+
+.hero-text { position: relative; z-index: 1; }
+
+.hero-eyebrow {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,.55);
+  margin-bottom: .5rem;
+}
+
+.hero-title {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.65rem;
+  color: #fff;
+  line-height: 1.15;
+  margin-bottom: .4rem;
+}
+
+.hero-sub {
+  font-size: .85rem;
+  color: rgba(255,255,255,.65);
+}
+
+.hero-actions {
+  display: flex;
+  gap: .75rem;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+
+.btn-upload-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: #fff;
+  color: var(--brand);
+  padding: .75rem 1.4rem;
+  border-radius: var(--r-md);
+  font-weight: 700;
+  font-size: .88rem;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .2s;
+  box-shadow: 0 2px 12px rgba(0,0,0,.12);
+}
+
+.btn-upload-label:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0,0,0,.18);
+}
+
+.btn-upload-label svg { flex-shrink: 0; }
+
+/* TOOLBAR ROW */
+.toolbar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.75rem;
+  gap: 1rem;
+}
+
+.report-meta {
+  display: flex;
+  flex-direction: column;
+  gap: .2rem;
+}
+
+.report-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.report-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.btn-download {
+  display: none;
+  align-items: center;
+  gap: .5rem;
+  background: var(--success);
+  color: #fff;
+  padding: .65rem 1.2rem;
+  border-radius: var(--r-md);
+  font-weight: 600;
+  font-size: .85rem;
+  border: none;
+  cursor: pointer;
+  font-family: 'Instrument Sans', sans-serif;
+  transition: background .2s, transform .15s;
+}
+
+.btn-download:hover { background: #0c7a52; }
+.btn-download:active { transform: scale(.97); }
+.btn-download.visible { display: inline-flex; }
+
+/* STATS STRIP */
+.stats-strip {
+  display: none;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stats-strip.visible { display: grid; }
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--r-lg);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+}
+
+.stat-card .s-label {
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.stat-card .s-value {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  color: var(--brand);
+  line-height: 1;
+}
+
+.stat-card .s-desc {
+  font-size: .78rem;
+  color: var(--muted);
+}
+
+/* GRID */
+#resultsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1.25rem;
+}
+
+/* EMPLOYEE CARD */
+.emp-card {
+  background: var(--surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow .2s, transform .2s;
+}
+
+.emp-card:hover {
+  box-shadow: 0 8px 32px rgba(14,87,116,.10);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--brand-faint);
+}
+
+.emp-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: .9rem;
+  flex-shrink: 0;
+}
+
+.emp-info { flex: 1; min-width: 0; }
+
+.emp-name {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: .95rem;
+  color: var(--brand);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.emp-dept {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: .1rem;
+}
+
+.mins-pill {
+  text-align: center;
+  background: var(--brand);
+  color: #fff;
+  border-radius: var(--r-md);
+  padding: .35rem .7rem;
+  flex-shrink: 0;
+}
+
+.mins-num {
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  font-size: 1.15rem;
+  line-height: 1;
+  display: block;
+}
+
+.mins-lbl {
+  font-size: .52rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  opacity: .75;
+}
+
+/* PERFECT */
+.perfect-card-header {
+  background: var(--success-bg);
+  border-bottom-color: rgba(15,138,95,.12);
+}
+
+.perfect-card-header .emp-name { color: var(--success); }
+.perfect-card-header .emp-avatar { background: var(--success); }
+.perfect-card-header .mins-pill { background: var(--success); }
+
+.perfect-label {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .85rem;
+  color: var(--success);
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.perfect-label::before {
+  content: '';
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--success-bg);
+  border: 2px solid var(--success);
+  display: block;
+  flex-shrink: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M13 4L6.5 11.5 3 8' stroke='%230f8a5f' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: 70% 70%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* LOG ROWS */
+.card-body { padding: .5rem 0; flex: 1; }
+
+.log-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: .6rem 1.25rem;
+  border-bottom: 1px solid var(--surface-3);
+  font-size: .83rem;
+  gap: .75rem;
+  transition: background .15s;
+}
+
+.log-row:last-child { border-bottom: none; }
+.log-row:hover { background: var(--brand-faint); }
+
+.log-date {
+  color: var(--muted);
+  font-size: .8rem;
+  flex: 1;
+}
+
+.log-right {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+}
+
+.tag-hd {
+  background: var(--accent-bg);
+  color: #8a6000;
+  font-size: .6rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  border: 1px solid rgba(240,165,0,.22);
+}
+
+.log-time {
+  color: var(--danger);
+  font-weight: 600;
+  font-family: 'DM Mono', monospace;
+  font-size: .82rem;
+}
+
+.log-late {
+  color: var(--muted);
+  font-size: .72rem;
+  font-family: 'DM Mono', monospace;
+}
+
+/* CARD FOOTER */
+.card-footer {
+  background: var(--surface-3);
+  padding: .7rem 1.25rem;
+  border-top: 1px solid var(--border-light);
+  font-size: .75rem;
+  font-weight: 600;
+  color: var(--muted);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.card-footer .f-pill {
+  display: flex;
+  align-items: center;
+  gap: .35rem;
+}
+
+.card-footer .f-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.card-footer .f-dot.warn { background: var(--accent); }
+.card-footer .f-dot.danger { background: var(--danger); }
+
+/* EMPTY STATE */
+.empty-state {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--brand-pale);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+}
+
+.empty-state p {
+  color: var(--muted);
+  font-size: .9rem;
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.emp-card { animation: fadeUp .3s ease both; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(14,87,116,.2);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+
+.spinner.active { display: block; }
+</style>
 </head>
 <body>
 
-    <!-- ── LOGIN PAGE ── -->
-    <div id="loginPage">
-        <div class="login-card">
-            <div class="login-icon">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            </div>
-            <h1 class="login-title">Admin Portal</h1>
-            <p class="login-sub">Enter password to access Attendance Insights</p>
-            <form id="loginForm">
-                <label class="form-label">Password</label>
-                <input type="password" id="passwordInput" class="form-input" placeholder="••••••••" required>
-                <button type="submit" class="btn-primary">Access Portal</button>
-                <p id="loginError" class="login-error">Incorrect password.</p>
-            </form>
+<!-- ══ LOGIN ══ -->
+<div id="loginPage">
+  <div class="login-wrap">
+    <div class="login-brand">
+      <div class="wordmark">KASE</div>
+      <div class="sub">Attendance Portal</div>
+    </div>
+    <div class="login-card">
+      <h2>Welcome back</h2>
+      <p>Sign in with your admin credentials to continue.</p>
+      <form id="loginForm">
+        <div class="field-group">
+          <label class="field-label" for="passwordInput">Password</label>
+          <input type="password" id="passwordInput" class="form-input" placeholder="Enter password" required>
         </div>
+        <button type="submit" class="btn-login">Sign in</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PORTAL ══ -->
+<div id="portalPage">
+  <nav class="topnav">
+    <div class="nav-logo">
+      <span class="dot"></span>
+      KASE <span class="light">Attendance</span>
+    </div>
+    <div class="nav-right">
+      <span class="nav-badge">Admin</span>
+      <button id="logoutBtn" class="btn-logout">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="main-content">
+
+    <!-- HERO -->
+    <div class="hero-strip">
+      <div class="hero-text">
+        <div class="hero-eyebrow">Attendance Intelligence</div>
+        <div class="hero-title">Monthly Insights</div>
+        <div class="hero-sub">Upload a report to analyse lateness and half-days across the team.</div>
+      </div>
+      <div class="hero-actions">
+        <div class="spinner" id="uploadSpinner"></div>
+        <label for="fileInput" class="btn-upload-label">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M16 8l-4-4-4 4M12 4v12" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Upload XLS
+        </label>
+        <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none">
+      </div>
     </div>
 
-    <!-- ── PORTAL PAGE ── -->
-    <div id="portalPage">
-        <nav class="topnav">
-            <div class="nav-brand">
-                <div class="nav-brand-icon"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg></div>
-                <span class="nav-brand-name">Kerala Academy for Skills Excellence <span>Attendance Report</span></span>
-            </div>
-            <button class="btn-logout" id="logoutBtn">Logout</button>
-        </nav>
-
-        <div class="main-content">
-            <div class="hero-strip">
-                <div class="hero-text">
-                    <h2>Upload & Analyse</h2>
-                    <p>Select your BasicWorkDurationReport.xls to start.</p>
-                </div>
-                <div class="hero-upload-area">
-                    <input type="file" id="fileInput" accept=".xls,.xlsx" style="display:none;">
-                    <label for="fileInput" class="btn-upload">Upload Report</label>
-                    <span id="fileStatus" class="file-status">No file selected</span>
-                </div>
-            </div>
-
-            <div class="section-header" id="sectionHeader" style="display:none;">
-                <div style="display:flex; align-items:center; gap:.6rem;">
-                    <span class="section-title">Employee Breakdown</span>
-                    <span class="section-count" id="sectionCount">0 records</span>
-                </div>
-                <button class="btn-download" id="downloadBtn">Download XLSX</button>
-            </div>
-
-            <div id="resultsGrid">
-                <div class="empty-state">
-                    <h3>No data yet</h3>
-                    <p>Upload a report to see employee records.</p>
-                </div>
-            </div>
-        </div>
+    <!-- TOOLBAR -->
+    <div class="toolbar-row">
+      <div class="report-meta">
+        <div class="report-label">Current Report</div>
+        <div class="report-title" id="reportTitle">Waiting for file…</div>
+      </div>
+      <button id="downloadBtn" class="btn-download">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M8 12l4 4 4-4M12 4v12" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Export XLSX
+      </button>
     </div>
 
-    <script>
-        const APP_PASSWORD = "admin123";
+    <!-- STATS STRIP -->
+    <div class="stats-strip" id="statsStrip">
+      <div class="stat-card">
+        <div class="s-label">Employees Flagged</div>
+        <div class="s-value" id="statFlagged">0</div>
+        <div class="s-desc">With at least one late arrival</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Total Late Minutes</div>
+        <div class="s-value" id="statMins">0</div>
+        <div class="s-desc">Combined across all staff</div>
+      </div>
+      <div class="stat-card">
+        <div class="s-label">Half Days Recorded</div>
+        <div class="s-value" id="statHDs">0</div>
+        <div class="s-desc">Arrivals after 11:30 AM</div>
+      </div>
+    </div>
 
-        if (sessionStorage.getItem('isLoggedIn') === 'true') showPortal();
+    <!-- GRID -->
+    <div id="resultsGrid">
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="#0e5774" stroke-width="1.5">
+            <path d="M9 12h6M9 16h6M7 8h10M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p>Upload an XLS file to see attendance insights.</p>
+      </div>
+    </div>
 
-        document.getElementById('loginForm').addEventListener('submit', e => {
-            e.preventDefault();
-            if (document.getElementById('passwordInput').value === APP_PASSWORD) {
-                sessionStorage.setItem('isLoggedIn', 'true');
-                showPortal();
-            } else {
-                document.getElementById('loginError').style.display = 'block';
-            }
-        });
+  </div>
+</div>
 
-        document.getElementById('logoutBtn').addEventListener('click', () => {
-            sessionStorage.removeItem('isLoggedIn');
-            location.reload();
-        });
+<script>
+const APP_PASS   = "admin123";
+const SHIFT_START = 615;   // 10:15
+const HD_LIMIT    = 690;   // 11:30
+const HD_START    = 825;   // 13:45
+const SHIFT_END   = 1035;  // 17:15
 
-        function showPortal() {
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('portalPage').style.display = 'block';
+let reportBuffer = [];
+
+// Auth
+if(sessionStorage.getItem('auth') === 'true') showPortal();
+
+document.getElementById('loginForm').addEventListener('submit', e => {
+  e.preventDefault();
+  if(document.getElementById('passwordInput').value === APP_PASS) {
+    sessionStorage.setItem('auth', 'true');
+    showPortal();
+  } else {
+    const inp = document.getElementById('passwordInput');
+    inp.style.borderColor = 'var(--danger)';
+    inp.style.boxShadow = '0 0 0 3px rgba(217,79,60,.12)';
+    setTimeout(() => { inp.style.borderColor = ''; inp.style.boxShadow = ''; }, 1200);
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  sessionStorage.removeItem('auth');
+  location.reload();
+});
+
+function showPortal() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('portalPage').style.display = 'block';
+}
+
+// File upload
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0]; if(!file) return;
+  document.getElementById('uploadSpinner').classList.add('active');
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    const wb = XLSX.read(new Uint8Array(evt.target.result), {type:'array'});
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, defval:null});
+    setTimeout(() => {
+      processAttendance(rows);
+      document.getElementById('uploadSpinner').classList.remove('active');
+    }, 200);
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+function timeToMins(t) {
+  if(!t || typeof t !== 'string' || !t.includes(':')) return null;
+  const p = t.trim().split(':'); return parseInt(p[0])*60 + parseInt(p[1]);
+}
+
+function initials(name) {
+  return name.split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+}
+
+function processAttendance(rows) {
+  const grid = document.getElementById('resultsGrid');
+  grid.innerHTML = '';
+  reportBuffer = [];
+
+  // Base date
+  let baseDate = null;
+  for(let i=0; i<5; i++) {
+    const joined = (rows[i]||[]).join(' ');
+    const match  = joined.match(/([A-Z][a-z]{2}\s\d{2}\s\d{4})/);
+    if(match) { baseDate = new Date(match[1]); break; }
+  }
+  if(!baseDate) baseDate = new Date('2026-04-01');
+
+  // Day map
+  const dayMap = {};
+  let headerRowIdx = -1;
+  for(let i=0; i<15; i++) {
+    const row = rows[i]||[];
+    const nums = row.filter(c => !isNaN(parseInt(String(c).split(' ')[0])));
+    if(nums.length > 5) { headerRowIdx = i; break; }
+  }
+  if(headerRowIdx !== -1) {
+    rows[headerRowIdx].forEach((c, idx) => {
+      const n = parseInt(String(c).split(' ')[0]);
+      if(!isNaN(n)) dayMap[idx] = n;
+    });
+  }
+
+  let currentEmp = null;
+  let totalFlaggedMins = 0, totalHDs = 0, totalFlagged = 0;
+
+  rows.forEach(row => {
+    if(!row) return;
+    for(let c=0; c<row.length-1; c++) {
+      if(row[c] === 'Emp. Name:') {
+        for(let k=c+1; k<row.length; k++) {
+          if(row[k]) { currentEmp = String(row[k]).trim(); break; }
         }
-
-        const SHIFT_START = 615; const HD_LIMIT = 690; const HD_START = 825; const SHIFT_END = 1035;
-        let reportBuffer = [];
-
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if (!file) return;
-            document.getElementById('fileStatus').textContent = 'Processing: ' + file.name;
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                try {
-                    const workbook = XLSX.read(new Uint8Array(event.target.result), { type: 'array' });
-                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: null });
-                    processData(rows);
-                } catch (err) { alert(err.message); }
-            };
-            reader.readAsArrayBuffer(file);
-        });
-
-        function timeToMins(t) {
-            if (!t || typeof t !== 'string' || !t.includes(':')) return null;
-            const parts = t.trim().split(':');
-            return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-        }
-
-        function processData(rows) {
-            const grid = document.getElementById('resultsGrid'); grid.innerHTML = '';
-            reportBuffer = [];
-            const dayMap = {}; let dayRowIdx = -1;
-
-            for (let i = 0; i < 15; i++) {
-                const count = (rows[i] || []).filter(c => !isNaN(parseInt(String(c).split(' ')[0], 10))).length;
-                if (count >= 5) { dayRowIdx = i; break; }
-            }
-            if (dayRowIdx !== -1) {
-                rows[dayRowIdx].forEach((cell, idx) => {
-                    const n = parseInt(String(cell).split(' ')[0], 10);
-                    if (!isNaN(n)) dayMap[idx] = n;
-                });
-            }
-
-            let currentEmp = null;
-            rows.forEach(row => {
-                if (!row) return;
-                for (let c = 0; c < row.length - 1; c++) {
-                    if (row[c] === 'Emp. Name:') {
-                        for (let k = c + 1; k < row.length; k++) { if (row[k]) { currentEmp = String(row[k]).trim(); break; } }
-                        break;
-                    }
-                }
-                if (currentEmp && row[0] === 'InTime' && Object.keys(dayMap).length > 0) {
-                    const lates = [];
-                    Object.entries(dayMap).forEach(([idx, day]) => {
-                        const time = row[parseInt(idx)] ? String(row[parseInt(idx)]).trim() : null;
-                        const mins = timeToMins(time);
-                        if (mins !== null && mins < SHIFT_END) {
-                            let late = 0, status = 'Late';
-                            if (mins > HD_LIMIT) { status = 'Half Day'; if (mins > HD_START) late = mins - HD_START; }
-                            else if (mins > SHIFT_START) late = mins - SHIFT_START;
-                            if (late > 0 || status === 'Half Day') lates.push({ date: day, time, late, status });
-                        }
-                    });
-                    const totalMins = lates.reduce((s, i) => s + i.late, 0);
-                    const hds = lates.filter(l => l.status === 'Half Day').length;
-                    reportBuffer.push({ 'Sl No': reportBuffer.length+1, 'Employee Name': currentEmp, 'Total Late Mins': totalMins, 'Half Day Count': hds, 'Logs': lates.map(l => `${l.date}: ${l.time}`).join('; ') });
-                    renderCard(currentEmp, lates, totalMins, hds);
-                    currentEmp = null;
-                }
+        break;
+      }
+    }
+    if(currentEmp && row[0] === 'InTime') {
+      const logs = [];
+      Object.entries(dayMap).forEach(([idx, dayNum]) => {
+        const time = row[parseInt(idx)] ? String(row[parseInt(idx)]).trim() : null;
+        const mins = timeToMins(time);
+        if(mins && mins < SHIFT_END) {
+          let late = 0, status = 'Late';
+          if(mins > HD_LIMIT) {
+            status = 'Half Day';
+            if(mins > HD_START) late = mins - HD_START;
+          } else if(mins > SHIFT_START) {
+            late = mins - SHIFT_START;
+          }
+          if(late > 0 || status === 'Half Day') {
+            let d = new Date(baseDate); d.setDate(dayNum);
+            logs.push({
+              date:   d.toLocaleDateString('en-GB', {day:'2-digit', month:'short'}),
+              time, late, status
             });
-
-            document.getElementById('sectionHeader').style.display = 'flex';
-            document.getElementById('sectionCount').textContent = reportBuffer.length + ' records';
-            document.getElementById('downloadBtn').style.display = reportBuffer.length ? 'flex' : 'none';
+          }
         }
+      });
+      const totalMins = logs.reduce((s, l) => s + l.late, 0);
+      const hdCount   = logs.filter(l => l.status === 'Half Day').length;
+      reportBuffer.push({
+        'Name': currentEmp,
+        'Total Late Mins': totalMins,
+        'HD Count': hdCount,
+        'Details': logs.map(l => `${l.date}: ${l.time}`).join('; ')
+      });
+      if(logs.length) {
+        totalFlagged++;
+        totalFlaggedMins += totalMins;
+        totalHDs += hdCount;
+      }
+      renderCard(currentEmp, logs, totalMins, hdCount, grid.children.length);
+      currentEmp = null;
+    }
+  });
 
-        function renderCard(name, lates, total, hds) {
-            const card = document.createElement('div'); card.className = 'emp-card';
-            const logRows = lates.map(l => `
-                <div class="log-row">
-                    <span class="log-date">Day ${l.date}</span>
-                    <div class="log-tags">${l.status==='Half Day'?'<span class="tag-halfday">HD</span>':''}<span class="log-time">${l.time}</span></div>
-                    <span class="log-late">+${l.late}m</span>
-                </div>`).join('');
+  // Report title
+  document.getElementById('reportTitle').textContent =
+    `${baseDate.toLocaleDateString('en-GB', {month:'long', year:'numeric'})}`;
 
-            card.innerHTML = `
-                <div class="card-header">
-                    <div class="emp-avatar">${name[0]}</div>
-                    <div class="emp-name">${name}</div>
-                    <div class="emp-mins-badge"><span class="num">${total}</span><span class="lbl">mins</span></div>
-                </div>
-                <div class="card-body">${lates.length ? logRows : '<div class="perfect-label">Perfect attendance</div>'}</div>
-                <div class="card-footer">${hds > 0 ? `<div class="footer-hd"><div class="hd-dot"></div><span>Half Days</span></div><span class="footer-hd-count">${hds}</span>` : `<span>${lates.length} instances</span>`}</div>`;
-            document.getElementById('resultsGrid').appendChild(card);
-        }
+  // Stats
+  const ss = document.getElementById('statsStrip');
+  if(reportBuffer.length) {
+    document.getElementById('statFlagged').textContent = totalFlagged;
+    document.getElementById('statMins').textContent    = totalFlaggedMins;
+    document.getElementById('statHDs').textContent     = totalHDs;
+    ss.classList.add('visible');
+  } else {
+    ss.classList.remove('visible');
+  }
 
-        document.getElementById('downloadBtn').addEventListener('click', () => {
-            const ws = XLSX.utils.json_to_sheet(reportBuffer);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, 'Summary');
-            XLSX.writeFile(wb, 'Attendance_Report.xlsx');
-        });
-    </script>
+  // Download btn
+  const btn = document.getElementById('downloadBtn');
+  reportBuffer.length ? btn.classList.add('visible') : btn.classList.remove('visible');
+}
+
+function renderCard(name, logs, total, hds, idx) {
+  const isPerfect = logs.length === 0;
+  const card = document.createElement('div');
+  card.className = 'emp-card';
+  card.style.animationDelay = `${Math.min(idx * 50, 400)}ms`;
+
+  const headerClass = isPerfect ? 'card-header perfect-card-header' : 'card-header';
+  const minsDisplay = isPerfect ? '0' : total;
+
+  const logRows = logs.map(l => `
+    <div class="log-row">
+      <span class="log-date">${l.date}</span>
+      <div class="log-right">
+        ${l.status === 'Half Day' ? '<span class="tag-hd">HD</span>' : ''}
+        <span class="log-time">${l.time}</span>
+        <span class="log-late">+${l.late}m</span>
+      </div>
+    </div>`).join('');
+
+  const bodyContent = isPerfect
+    ? `<div class="perfect-label">Perfect attendance record</div>`
+    : logRows;
+
+  const fdot1cls = logs.length ? 'f-dot danger' : 'f-dot';
+  const fdot2cls = hds ? 'f-dot warn' : 'f-dot';
+
+  card.innerHTML = `
+    <div class="${headerClass}">
+      <div class="emp-avatar">${initials(name)}</div>
+      <div class="emp-info">
+        <div class="emp-name">${name}</div>
+        <div class="emp-dept">${logs.length} late instances</div>
+      </div>
+      <div class="mins-pill">
+        <span class="mins-num">${minsDisplay}</span>
+        <span class="mins-lbl">mins</span>
+      </div>
+    </div>
+    <div class="card-body">${bodyContent}</div>
+    <div class="card-footer">
+      <span class="f-pill"><span class="${fdot1cls}"></span>${logs.length} incidents</span>
+      <span class="f-pill"><span class="${fdot2cls}"></span>${hds} half day${hds !== 1 ? 's' : ''}</span>
+    </div>`;
+
+  document.getElementById('resultsGrid').appendChild(card);
+}
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  const ws = XLSX.utils.json_to_sheet(reportBuffer);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Summary');
+  XLSX.writeFile(wb, 'Final_Attendance_Report.xlsx');
+});
+</script>
 </body>
 </html>
